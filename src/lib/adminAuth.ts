@@ -1,11 +1,19 @@
-"use client";
+// Client-side admin auth using sessionStorage
+// Password is set via NEXT_PUBLIC_ADMIN_PASSWORD env var on Vercel
+// Falls back to "futsal2026" for local dev
 
 const SESSION_KEY = "futsal_admin_authed";
-const ADMIN_PASSWORD = "futsal2026"; // change this to a strong password
+
+function getAdminPassword(): string {
+  return process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "futsal2026";
+}
 
 export function adminLogin(password: string): boolean {
-  if (password === ADMIN_PASSWORD) {
-    sessionStorage.setItem(SESSION_KEY, "true");
+  const correct = getAdminPassword();
+  if (password === correct) {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(SESSION_KEY, "true");
+    }
     return true;
   }
   return false;
@@ -17,5 +25,7 @@ export function isAdminAuthed(): boolean {
 }
 
 export function adminLogout(): void {
-  sessionStorage.removeItem(SESSION_KEY);
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem(SESSION_KEY);
+  }
 }
