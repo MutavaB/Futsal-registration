@@ -58,11 +58,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-futsal-red flex-shrink-0" />
-                +254 727 666 561
+                +254 708 800 738
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-futsal-red flex-shrink-0" />
-                info@futsalukkenya.co.ke
+                clubfutsalkenya@gmail.com
               </li>
             </ul>
           </div>
