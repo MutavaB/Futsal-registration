@@ -61,17 +61,22 @@ export default function RegistrationForm() {
 
   const onSubmit = async (data: PlayerSchemaType) => {
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 900));
-    const player: Player = {
-      ...data,
-      id: uuidv4(),
-      status: "Pending",
-      registrationDate: new Date().toISOString(),
-      registrationNumber: generateRegNumber(),
-    };
-    savePlayer(player);
-    setSuccess(player);
-    setSubmitting(false);
+    try {
+      const player: Player = {
+        ...data,
+        id: uuidv4(),
+        status: "Pending",
+        registrationDate: new Date().toISOString(),
+        registrationNumber: generateRegNumber(),
+      };
+      await savePlayer(player);
+      setSuccess(player);
+    } catch (err) {
+      console.error("Registration failed:", err);
+      alert("Registration failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /* ── Success Screen ── */

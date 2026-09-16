@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { isAdminAuthed, adminLogout } from "@/lib/adminAuth";
 import { getPlayers, deletePlayer, updatePlayerStatus } from "@/lib/storage";
@@ -9,7 +9,7 @@ import {
   Users, LogOut, Search, SlidersHorizontal,
   Trash2, Phone, Mail, MapPin, CalendarDays,
   Shirt, User, TrendingUp, Globe, Trophy, RefreshCw,
-  CheckCircle2, XCircle, Clock
+  CheckCircle2, XCircle, Clock,
 } from "lucide-react";
 
 const ALL = "All";
@@ -33,55 +33,50 @@ const positionColors: Record<string, string> = {
 };
 
 const statusConfig: Record<Player["status"], { color: string; icon: React.ReactNode; label: string }> = {
-  Active:   { color: "bg-green-100 text-green-700 border border-green-200",   icon: <CheckCircle2 className="w-3 h-3" />, label: "Active"   },
-  Inactive: { color: "bg-gray-100 text-gray-600 border border-gray-200",      icon: <XCircle className="w-3 h-3" />,      label: "Inactive" },
-  Pending:  { color: "bg-orange-100 text-orange-700 border border-orange-200", icon: <Clock className="w-3 h-3" />,        label: "Pending"  },
+  Active:   { color: "bg-green-100 text-green-700 border border-green-200",    icon: <CheckCircle2 className="w-3 h-3" />, label: "Active"   },
+  Inactive: { color: "bg-gray-100 text-gray-600 border border-gray-200",       icon: <XCircle      className="w-3 h-3" />, label: "Inactive" },
+  Pending:  { color: "bg-orange-100 text-orange-700 border border-orange-200", icon: <Clock        className="w-3 h-3" />, label: "Pending"  },
 };
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [search, setSearch] = useState("");
-  const [region, setRegion] = useState(ALL);
+  const [ready, setReady]       = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [players, setPlayers]   = useState<Player[]>([]);
+  const [search, setSearch]     = useState("");
+  const [region, setRegion]     = useState(ALL);
   const [position, setPosition] = useState(ALL);
   const [showFilters, setShowFilters] = useState(false);
   const [selected, setSelected] = useState<Player | null>(null);
+
+  const loadPlayers = useCallback(async (keepSelected?: Player | null) => {
+    setLoading(true);
+    const fresh = await getPlayers();
+    setPlayers(fresh);
+    if (keepSelected !== undefined) {
+      setSelected(fresh.find((p) => p.id === keepSelected?.id) ?? null);
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     if (!isAdminAuthed()) {
       router.replace("/admin/login");
       return;
     }
-    setPlayers(getPlayers());
-    setReady(true);
-  }, [router]);
+    loadPlayers().then(() => setReady(true));
+  }, [router, loadPlayers]);
 
-  const refresh = () => {
-    const fresh = getPlayers();
-    setPlayers(fresh);
-    // keep selected in sync
-    if (selected) {
-      const updated = fresh.find((p) => p.id === selected.id);
-      setSelected(updated ?? null);
-    }
+  const handleDelete = async (id: string) => {
+    if (!confirm("Permanently remove this player?")) return;
+    await deletePlayer(id);
+    if (selected?.id === id) setSelected(null);
+    await loadPlayers(null);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Permanently remove this player?")) {
-      deletePlayer(id);
-      if (selected?.id === id) setSelected(null);
-      setPlayers(getPlayers());
-    }
-  };
-
-  const handleStatusChange = (id: string, status: Player["status"]) => {
-    updatePlayerStatus(id, status);
-    const fresh = getPlayers();
-    setPlayers(fresh);
-    if (selected?.id === id) {
-      setSelected(fresh.find((p) => p.id === id) ?? null);
-    }
+  const handleStatusChange = async (id: string, status: Player["status"]) => {
+    await updatePlayerStatus(id, status);
+    await loadPlayers(selected);
   };
 
   const handleLogout = () => {
@@ -97,9 +92,9 @@ export default function AdminDashboard() {
       p.email.toLowerCase().includes(q) ||
       p.contactNumber.includes(q) ||
       p.town.toLowerCase().includes(q);
-    const matchRegion   = region   === ALL || p.region   === region;
-    const matchPos      = position === ALL || p.position === position;
-    return matchSearch && matchRegion && matchPos;
+    return matchSearch &&
+      (region   === ALL || p.region   === region) &&
+      (position === ALL || p.position === position);
   }), [players, search, region, position]);
 
   const stats = useMemo(() => {
@@ -107,9 +102,9 @@ export default function AdminDashboard() {
     players.forEach((p) => { regionMap[p.region] = (regionMap[p.region] || 0) + 1; });
     const topRegion = Object.entries(regionMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
     return {
-      total:    players.length,
-      pending:  players.filter((p) => p.status === "Pending").length,
-      active:   players.filter((p) => p.status === "Active").length,
+      total:   players.length,
+      pending: players.filter((p) => p.status === "Pending").length,
+      active:  players.filter((p) => p.status === "Active").length,
       topRegion,
     };
   }, [players]);
@@ -131,17 +126,15 @@ export default function AdminDashboard() {
       <header className="bg-futsal-navy border-b-4 border-futsal-red sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-futsal-red flex items-center justify-center text-white font-black text-sm shadow">
-              FK
-            </div>
+            <div className="w-9 h-9 rounded-full bg-futsal-red flex items-center justify-center text-white font-black text-sm shadow">FK</div>
             <div>
               <span className="font-black text-white text-base tracking-tight">FUTSAL UK KENYA</span>
               <span className="text-futsal-red text-[10px] font-bold tracking-widest uppercase block -mt-0.5">Admin Dashboard</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={refresh} title="Refresh"
-              className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors">
+            <button onClick={() => loadPlayers(selected)} title="Refresh"
+              className={`text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors ${loading ? "animate-spin" : ""}`}>
               <RefreshCw className="w-4 h-4" />
             </button>
             <button onClick={handleLogout}
@@ -175,7 +168,6 @@ export default function AdminDashboard() {
         <div className="flex gap-6">
           {/* Table */}
           <div className="flex-1 min-w-0">
-            {/* Search + filter bar */}
             <div className="card p-4 mb-4 border-t-4 border-futsal-red">
               <div className="flex gap-3 flex-wrap">
                 <div className="flex-1 min-w-[180px] relative">
@@ -199,7 +191,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
               {showFilters && (
-                <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="mt-4 pt-4 border-t grid sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Region</label>
                     <select value={region} onChange={(e) => setRegion(e.target.value)} className="input-field text-sm">
@@ -229,8 +221,12 @@ export default function AdminDashboard() {
             {filtered.length === 0 ? (
               <div className="card p-12 text-center border-t-4 border-futsal-red">
                 <div className="text-5xl mb-3">⚽</div>
-                <h3 className="font-black text-futsal-navy text-lg mb-1">No players found</h3>
-                <p className="text-gray-400 text-sm">Try adjusting your search or filters.</p>
+                <h3 className="font-black text-futsal-navy text-lg mb-1">
+                  {players.length === 0 ? "No players registered yet" : "No players found"}
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  {players.length === 0 ? "Registrations will appear here in real time." : "Try adjusting your search or filters."}
+                </p>
               </div>
             ) : (
               <div className="card overflow-hidden border border-gray-100">
@@ -264,17 +260,12 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 font-mono text-xs text-gray-500 hidden md:table-cell">{p.registrationNumber}</td>
                           <td className="px-4 py-3 hidden lg:table-cell text-gray-600">{p.region}</td>
                           <td className="px-4 py-3 hidden lg:table-cell">
-                            <span className={`badge text-xs ${positionColors[p.position] || "bg-gray-100 text-gray-700"}`}>
-                              {p.position}
-                            </span>
+                            <span className={`badge text-xs ${positionColors[p.position] || "bg-gray-100 text-gray-700"}`}>{p.position}</span>
                           </td>
-                          {/* Inline status changer */}
                           <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                            <select
-                              value={p.status}
+                            <select value={p.status}
                               onChange={(e) => handleStatusChange(p.id, e.target.value as Player["status"])}
-                              className={`text-xs font-semibold rounded-full px-2 py-1 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-futsal-red ${statusConfig[p.status].color}`}
-                            >
+                              className={`text-xs font-semibold rounded-full px-2 py-1 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-futsal-red ${statusConfig[p.status].color}`}>
                               <option value="Pending">Pending</option>
                               <option value="Active">Active</option>
                               <option value="Inactive">Inactive</option>
@@ -316,11 +307,11 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="p-5 space-y-3 text-sm">
-                  {/* Status changer in detail panel */}
+                  {/* Status buttons */}
                   <div className="bg-futsal-gray rounded-xl p-3">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Player Status</p>
                     <div className="flex gap-2">
-                      {(["Active", "Pending", "Inactive"] as Player["status"][]).map((s) => (
+                      {(["Active","Pending","Inactive"] as Player["status"][]).map((s) => (
                         <button key={s} onClick={() => handleStatusChange(selected.id, s)}
                           className={`flex-1 flex items-center justify-center gap-1 text-xs font-bold py-1.5 rounded-lg border transition-all ${
                             selected.status === s
@@ -355,7 +346,7 @@ export default function AdminDashboard() {
 
                   <div className="pt-3 border-t border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Football</p>
-                    <Row icon={<Trophy    className="w-4 h-4 text-futsal-red" />} label="Foot"       value={selected.preferredFoot} />
+                    <Row icon={<Trophy     className="w-4 h-4 text-futsal-red" />} label="Foot"       value={selected.preferredFoot} />
                     <Row icon={<TrendingUp className="w-4 h-4 text-futsal-red" />} label="Experience" value={`${selected.yearsExperience} years`} />
                     {selected.previousClub && (
                       <Row icon={<Trophy className="w-4 h-4 text-futsal-red" />} label="Prev Club" value={selected.previousClub} />
@@ -365,7 +356,7 @@ export default function AdminDashboard() {
                   <div className="pt-2 border-t border-gray-100">
                     <p className="text-xs text-gray-400">
                       Registered: {new Date(selected.registrationDate).toLocaleDateString("en-GB", {
-                        day: "numeric", month: "short", year: "numeric"
+                        day: "numeric", month: "short", year: "numeric",
                       })}
                     </p>
                   </div>
