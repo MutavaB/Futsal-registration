@@ -29,3 +29,10 @@ export function deletePlayer(id: string): void {
   const players = getPlayers().filter((p) => p.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
 }
+
+export function updatePlayerStatus(id: string, status: Player["status"]): void {
+  const players = getPlayers().map((p) =>
+    p.id === id ? { ...p, status } : p
+  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+}
