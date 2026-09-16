@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #eef1f6;
+  color: #0d1b3e;
+}
+
+@layer components {
+  /* Primary CTA — futsal.com red */
+  .btn-primary {
+    @apply bg-futsal-red hover:bg-futsal-redlight text-white font-bold px-6 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 tracking-wide;
+  }
+
+  /* Secondary — deep navy */
+  .btn-secondary {
+    @apply bg-futsal-navy hover:bg-futsal-navylight text-white font-bold px-6 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95;
+  }
+
+  /* Outline */
+  .btn-outline {
+    @apply border-2 border-futsal-red text-futsal-red hover:bg-futsal-red hover:text-white font-bold px-6 py-3 rounded-lg transition-all duration-200;
+  }
+
+  .btn-outline-white {
+    @apply border-2 border-white text-white hover:bg-white hover:text-futsal-navy font-bold px-6 py-3 rounded-lg transition-all duration-200;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-futsal-red focus:border-transparent bg-white text-gray-800 placeholder-gray-400 transition-all duration-200;
+  }
+
+  .input-error {
+    @apply border-red-500 focus:ring-red-400;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300;
+  }
+
+  .section-title {
+    @apply text-3xl font-black text-futsal-navy tracking-tight;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+  }
+}
