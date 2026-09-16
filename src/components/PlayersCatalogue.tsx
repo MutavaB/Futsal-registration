@@ -131,7 +131,7 @@ export default function PlayersCatalogue() {
         <div className="card p-16 text-center border-t-4 border-futsal-red">
           {players.length === 0 ? (
             <>
-              <div className="text-6xl mb-4">⚽</div>
+              <div className="text-6xl mb-4"></div>
               <h3 className="text-xl font-black text-futsal-navy mb-2">No players yet</h3>
               <p className="text-gray-400 mb-6">Be the first to register as a Futsal UK Kenya player.</p>
               <Link href="/register" className="btn-primary inline-flex items-center gap-2">
@@ -140,7 +140,7 @@ export default function PlayersCatalogue() {
             </>
           ) : (
             <>
-              <div className="text-6xl mb-4">🔍</div>
+              <div className="text-6xl mb-4"></div>
               <h3 className="text-xl font-black text-futsal-navy mb-2">No matches found</h3>
               <p className="text-gray-400">Try adjusting your search or filters.</p>
             </>

@@ -217,7 +217,7 @@ export default function AdminDashboard() {
             {/* Table */}
             {filtered.length === 0 ? (
               <div className="card p-12 text-center border-t-4 border-futsal-red">
-                <div className="text-5xl mb-3">⚽</div>
+                <div className="text-5xl mb-3"></div>
                 <h3 className="font-black text-futsal-navy text-lg mb-1">No players found</h3>
                 <p className="text-gray-400 text-sm">Try adjusting your search or filters.</p>
               </div>

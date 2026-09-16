@@ -20,7 +20,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Official player registration portal for Futsal UK Kenya — developing
+              Official player registration portal for Futsal UK Kenya developing
               futsal talent across all 47 counties.
             </p>
           </div>
@@ -58,7 +58,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-futsal-red flex-shrink-0" />
-                +254 700 000 000
+                +254 727 666 561
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-futsal-red flex-shrink-0" />
