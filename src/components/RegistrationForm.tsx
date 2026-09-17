@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { playerSchema, PlayerSchemaType } from "@/lib/schema";
 import { savePlayer, generateRegNumber } from "@/lib/storage";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { Player, KenyaRegion, PlayerPosition } from "@/types/player";
 import { v4 as uuidv4 } from "uuid";
 import FormField from "@/components/FormField";
@@ -62,6 +63,9 @@ export default function RegistrationForm() {
   const onSubmit = async (data: PlayerSchemaType) => {
     setSubmitting(true);
     try {
+      if (!isSupabaseConfigured()) {
+        throw new Error("Database not configured. Please contact the administrator.");
+      }
       const player: Player = {
         ...data,
         id: uuidv4(),
@@ -72,8 +76,8 @@ export default function RegistrationForm() {
       await savePlayer(player);
       setSuccess(player);
     } catch (err) {
-      console.error("Registration failed:", err);
-      alert("Registration failed. Please try again.");
+      const msg = err instanceof Error ? err.message : "Registration failed. Please try again.";
+      alert(msg);
     } finally {
       setSubmitting(false);
     }
