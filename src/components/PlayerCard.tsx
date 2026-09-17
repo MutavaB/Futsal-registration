@@ -4,7 +4,7 @@ import { Phone, Mail, MapPin, User, Trash2, CalendarDays, Shirt } from "lucide-r
 
 interface PlayerCardProps {
   player: Player;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
 }
 
 const positionColors: Record<string, string> = {

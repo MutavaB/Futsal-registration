@@ -27,13 +27,14 @@ export default function PlayersCatalogue() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    setPlayers(getPlayers());
+    getPlayers().then(setPlayers);
   }, []);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Remove this player from the catalogue?")) {
-      deletePlayer(id);
-      setPlayers(getPlayers());
+      await deletePlayer(id);
+      const fresh = await getPlayers();
+      setPlayers(fresh);
     }
   };
 
@@ -44,11 +45,9 @@ export default function PlayersCatalogue() {
         `${p.firstName} ${p.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
         p.registrationNumber.toLowerCase().includes(search.toLowerCase()) ||
         p.town.toLowerCase().includes(search.toLowerCase());
-
-      const matchRegion = region === ALL || p.region === region;
-      const matchPosition = position === ALL || p.position === position;
-
-      return matchSearch && matchRegion && matchPosition;
+      return matchSearch &&
+        (region === ALL || p.region === region) &&
+        (position === ALL || p.position === position);
     });
   }, [players, search, region, position]);
 
@@ -56,27 +55,19 @@ export default function PlayersCatalogue() {
 
   return (
     <div>
-      {/* Search + Filter Bar */}
       <div className="card p-4 mb-6 border-t-4 border-futsal-red">
         <div className="flex gap-3 flex-wrap">
           <div className="flex-1 min-w-[200px] relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, reg no, or town..."
-              className="input-field pl-9"
-            />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, reg no, or town..." className="input-field pl-9" />
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
+          <button onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-4 py-3 rounded-lg border font-semibold text-sm transition-colors ${
               showFilters || activeFilters > 0
                 ? "bg-futsal-navy text-white border-futsal-navy"
                 : "bg-white text-gray-600 border-gray-300 hover:border-futsal-navy"
-            }`}
-          >
+            }`}>
             <SlidersHorizontal className="w-4 h-4" />
             Filters
             {activeFilters > 0 && (
@@ -86,7 +77,6 @@ export default function PlayersCatalogue() {
             )}
           </button>
         </div>
-
         {showFilters && (
           <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -105,22 +95,16 @@ export default function PlayersCatalogue() {
         )}
       </div>
 
-      {/* Results count */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-500">
           Showing <strong className="text-futsal-navy">{filtered.length}</strong> of {players.length} player{players.length !== 1 ? "s" : ""}
         </p>
         {(search || region !== ALL || position !== ALL) && (
-          <button
-            onClick={() => { setSearch(""); setRegion(ALL); setPosition(ALL); }}
-            className="text-xs text-futsal-red hover:underline font-semibold"
-          >
-            Clear filters
-          </button>
+          <button onClick={() => { setSearch(""); setRegion(ALL); setPosition(ALL); }}
+            className="text-xs text-futsal-red hover:underline font-semibold">Clear filters</button>
         )}
       </div>
 
-      {/* Grid */}
       {filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.map((player) => (
@@ -131,7 +115,7 @@ export default function PlayersCatalogue() {
         <div className="card p-16 text-center border-t-4 border-futsal-red">
           {players.length === 0 ? (
             <>
-              <div className="text-6xl mb-4"></div>
+              <div className="text-6xl mb-4">⚽</div>
               <h3 className="text-xl font-black text-futsal-navy mb-2">No players yet</h3>
               <p className="text-gray-400 mb-6">Be the first to register as a Futsal UK Kenya player.</p>
               <Link href="/register" className="btn-primary inline-flex items-center gap-2">
@@ -140,7 +124,7 @@ export default function PlayersCatalogue() {
             </>
           ) : (
             <>
-              <div className="text-6xl mb-4"></div>
+              <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-black text-futsal-navy mb-2">No matches found</h3>
               <p className="text-gray-400">Try adjusting your search or filters.</p>
             </>
